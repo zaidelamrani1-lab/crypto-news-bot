@@ -1,0 +1,51 @@
+name: Crypto News Bot
+
+# Runs automatically on a schedule, and can be triggered manually from the Actions tab.
+on:
+  schedule:
+    # Every 15 minutes. GitHub's minimum is */5. Note: runs can be delayed
+    # 5-30 min at busy times — normal for free scheduled jobs.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+# Allow the job to commit the updated seen.json back to the repo.
+permissions:
+  contents: write
+
+# Never run two copies at once.
+concurrency:
+  group: news-bot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run the bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python bot.py
+
+      - name: Save which articles were sent
+        run: |
+          if [ -n "$(git status --porcelain seen.json)" ]; then
+            git config user.name "news-bot"
+            git config user.email "news-bot@users.noreply.github.com"
+            git add seen.json
+            git commit -m "Update seen articles [skip ci]"
+            git push
+          else
+            echo "No changes to seen.json"
+          fi

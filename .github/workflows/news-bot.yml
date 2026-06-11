@@ -5,7 +5,7 @@ on:
   schedule:
     # Every 15 minutes. GitHub's minimum is */5. Note: runs can be delayed
     # 5-30 min at busy times — normal for free scheduled jobs.
-    - cron: "*/15 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 # Allow the job to commit the updated seen.json back to the repo.
